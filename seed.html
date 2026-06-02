@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>إضافة المنيو - بركر ويست</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Tajawal',sans-serif;background:#0a0a0f;color:#e8e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.card{background:#13131a;border:1px solid #25253a;border-radius:20px;padding:30px;max-width:500px;width:100%;text-align:center;}
+h1{font-size:22px;margin-bottom:8px;}
+p{color:#6b6b8a;font-size:13px;margin-bottom:24px;}
+.btn{padding:14px 28px;border:none;border-radius:12px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#000;font-family:inherit;font-size:16px;font-weight:900;cursor:pointer;width:100%;}
+.btn:disabled{opacity:.5;}
+.log{margin-top:16px;background:#1a1a24;border-radius:10px;padding:12px;font-size:12px;color:#6b6b8a;text-align:right;max-height:200px;overflow-y:auto;line-height:1.8;}
+.success{color:#10b981;}
+.err{color:#ef4444;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🍔 إضافة منيو بركر ويست</h1>
+  <p>سيتم إضافة 10 أقسام و 51 صنف إلى Firebase</p>
+  <button class="btn" id="btn" onclick="seedDB()">🚀 ابدأ الإضافة</button>
+  <div class="log" id="log">في انتظار البدء...</div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, setDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyAIkpN0_cSJzSOq-oWDjBbTPJUxe7MHDTk",
+  authDomain:"restaurant-pos-891d8.firebaseapp.com",
+  projectId:"restaurant-pos-891d8",
+  storageBucket:"restaurant-pos-891d8.firebasestorage.app",
+  messagingSenderId:"582886444374",
+  appId:"1:582886444374:web:70251a1d78e6258a759af7"
+});
+const db = getFirestore(app);
+
+const categories = [{"id": "burger", "name": "برغر", "kitchenSection": "برگر", "order": 1}, {"id": "pizza", "name": "بيتزا", "kitchenSection": "بيتزا", "order": 2}, {"id": "saj", "name": "صاج", "kitchenSection": "شاورما", "order": 3}, {"id": "shawarma", "name": "شاورما", "kitchenSection": "شاورما", "order": 4}, {"id": "chicken", "name": "تشيكن", "kitchenSection": "كنتاكي", "order": 5}, {"id": "kentucky", "name": "كنتاكي", "kitchenSection": "كنتاكي", "order": 6}, {"id": "rizo", "name": "ريزو", "kitchenSection": "دايت", "order": 7}, {"id": "laqam", "name": "لقم", "kitchenSection": "دايت", "order": 8}, {"id": "diet", "name": "وجبات دايت", "kitchenSection": "دايت", "order": 9}, {"id": "appetizer", "name": "مقبلات", "kitchenSection": "برگر", "order": 10}];
+const menuItems = [{"name": "برغر سبايسي", "price": 5000, "categoryId": "burger", "kitchenSection": "برگر"}, {"name": "برغر كلاسك", "price": 4500, "categoryId": "burger", "kitchenSection": "برگر"}, {"name": "برغر مشروم", "price": 5500, "categoryId": "burger", "kitchenSection": "برگر"}, {"name": "برغر هوت", "price": 5000, "categoryId": "burger", "kitchenSection": "برگر"}, {"name": "برغر دبل", "price": 7000, "categoryId": "burger", "kitchenSection": "برگر"}, {"name": "برغر فشاج", "price": 5500, "categoryId": "burger", "kitchenSection": "برگر"}, {"name": "برغر ايت", "price": 6000, "categoryId": "burger", "kitchenSection": "برگر"}, {"name": "برغر كابوي", "price": 6500, "categoryId": "burger", "kitchenSection": "برگر"}, {"name": "بيتزا كرسبي", "price": 8000, "categoryId": "pizza", "kitchenSection": "بيتزا"}, {"name": "بيتزا شاورما", "price": 9000, "categoryId": "pizza", "kitchenSection": "بيتزا"}, {"name": "بيتزا لحم", "price": 9000, "categoryId": "pizza", "kitchenSection": "بيتزا"}, {"name": "بيتزا هوت دوف", "price": 8500, "categoryId": "pizza", "kitchenSection": "بيتزا"}, {"name": "بيتزا بيروني", "price": 8000, "categoryId": "pizza", "kitchenSection": "بيتزا"}, {"name": "بيتزا خضار", "price": 7500, "categoryId": "pizza", "kitchenSection": "بيتزا"}, {"name": "مناقيش جبن", "price": 4000, "categoryId": "pizza", "kitchenSection": "بيتزا"}, {"name": "لحم بعجين", "price": 4500, "categoryId": "pizza", "kitchenSection": "بيتزا"}, {"name": "صاج دجاج", "price": 6000, "categoryId": "saj", "kitchenSection": "شاورما"}, {"name": "صاج لحم", "price": 7000, "categoryId": "saj", "kitchenSection": "شاورما"}, {"name": "صاج مشكل", "price": 7500, "categoryId": "saj", "kitchenSection": "شاورما"}, {"name": "صاج دجاج صغير", "price": 4000, "categoryId": "saj", "kitchenSection": "شاورما"}, {"name": "صاج لحم صغير", "price": 5000, "categoryId": "saj", "kitchenSection": "شاورما"}, {"name": "شاورما دجاج", "price": 3500, "categoryId": "shawarma", "kitchenSection": "شاورما"}, {"name": "شاورما لحم", "price": 4500, "categoryId": "shawarma", "kitchenSection": "شاورما"}, {"name": "شاورما فاهيتا", "price": 4000, "categoryId": "shawarma", "kitchenSection": "شاورما"}, {"name": "وجبة شاورما دجاج", "price": 6000, "categoryId": "shawarma", "kitchenSection": "شاورما"}, {"name": "وجبة شاورما لحم", "price": 7000, "categoryId": "shawarma", "kitchenSection": "شاورما"}, {"name": "زنكر", "price": 5000, "categoryId": "chicken", "kitchenSection": "كنتاكي"}, {"name": "فلر", "price": 5000, "categoryId": "chicken", "kitchenSection": "كنتاكي"}, {"name": "بوب كورن", "price": 4000, "categoryId": "chicken", "kitchenSection": "كنتاكي"}, {"name": "توستر", "price": 5500, "categoryId": "chicken", "kitchenSection": "كنتاكي"}, {"name": "كوردن بلو", "price": 6000, "categoryId": "chicken", "kitchenSection": "كنتاكي"}, {"name": "كنتاكي 3 قطع", "price": 5000, "categoryId": "kentucky", "kitchenSection": "كنتاكي"}, {"name": "كنتاكي 5 قطع", "price": 8000, "categoryId": "kentucky", "kitchenSection": "كنتاكي"}, {"name": "كنتاكي 8 قطع", "price": 12000, "categoryId": "kentucky", "kitchenSection": "كنتاكي"}, {"name": "كنتاكي 12 قطع", "price": 17000, "categoryId": "kentucky", "kitchenSection": "كنتاكي"}, {"name": "ستريبس 3 قطع", "price": 4500, "categoryId": "kentucky", "kitchenSection": "كنتاكي"}, {"name": "ستريبس 5 قطع", "price": 7000, "categoryId": "kentucky", "kitchenSection": "كنتاكي"}, {"name": "ريزو عادي", "price": 3000, "categoryId": "rizo", "kitchenSection": "دايت"}, {"name": "ريزو دجاج", "price": 5000, "categoryId": "rizo", "kitchenSection": "دايت"}, {"name": "ريزو لحم", "price": 6000, "categoryId": "rizo", "kitchenSection": "دايت"}, {"name": "ريزو مشكل", "price": 6500, "categoryId": "rizo", "kitchenSection": "دايت"}, {"name": "لقم عادي", "price": 2500, "categoryId": "laqam", "kitchenSection": "دايت"}, {"name": "لقم بالجبن", "price": 3000, "categoryId": "laqam", "kitchenSection": "دايت"}, {"name": "لقم بالشوكولاتة", "price": 3500, "categoryId": "laqam", "kitchenSection": "دايت"}, {"name": "وجبة دايت دجاج", "price": 7000, "categoryId": "diet", "kitchenSection": "دايت"}, {"name": "وجبة دايت لحم", "price": 8000, "categoryId": "diet", "kitchenSection": "دايت"}, {"name": "سلطة دايت", "price": 4000, "categoryId": "diet", "kitchenSection": "دايت"}, {"name": "بطاطا فرايز", "price": 2500, "categoryId": "appetizer", "kitchenSection": "برگر"}, {"name": "بطاطا ويدجز", "price": 3000, "categoryId": "appetizer", "kitchenSection": "برگر"}, {"name": "موزاريلا ستيكس", "price": 4000, "categoryId": "appetizer", "kitchenSection": "برگر"}, {"name": "أونيون رينج", "price": 3500, "categoryId": "appetizer", "kitchenSection": "برگر"}];
+
+window.seedDB = async function() {
+  const btn = document.getElementById('btn');
+  const log = document.getElementById('log');
+  btn.disabled = true;
+  log.innerHTML = '';
+  
+  const add = (msg, cls='') => { log.innerHTML += `<div class="${cls}">${msg}</div>`; log.scrollTop=log.scrollHeight; };
+  
+  try {
+    add('📂 إضافة الأقسام...');
+    for(const cat of categories) {
+      await setDoc(doc(db,'categories',cat.id), cat);
+      add(`✅ ${cat.name}`, 'success');
+    }
+    
+    add('🍽️ إضافة الأصناف...');
+    for(const item of menuItems) {
+      await addDoc(collection(db,'menu'), item);
+      add(`✅ ${item.name}`, 'success');
+    }
+    
+    add('🎉 تم! 10 أقسام و 51 صنف مضافين بنجاح', 'success');
+    btn.innerHTML = '✅ تم بنجاح!';
+  } catch(e) {
+    add('❌ خطأ: '+e.message, 'err');
+    btn.disabled = false;
+  }
+};
+</script>
+</body>
+</html>
