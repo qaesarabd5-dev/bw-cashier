@@ -225,9 +225,7 @@ let orderItems = [], currentOrderType = 'delivery';
 // Splash
 setTimeout(() => {
   const sp = document.getElementById('splash');
-  sp.classList.add('hide');
-  setTimeout(() => { sp.style.display='none'; }, 600);
-  document.getElementById('loginWrap').style.display='flex';
+  if(sp){sp.classList.add('hide'); setTimeout(()=>{sp.style.display='none';},600);}
 }, 2500);
 
 window.addEventListener('fbReady', () => {
