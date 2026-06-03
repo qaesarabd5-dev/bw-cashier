@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>بركر ويست - كاشير</title>
+<meta name="theme-color" content="#f59e0b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BW كاشير">
+<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0a0a0f;--panel:#13131a;--panel2:#1a1a24;--line:#25253a;--text:#e8e8f0;--muted:#6b6b8a;--accent:#f59e0b;--accent2:#fbbf24;--success:#10b981;--danger:#ef4444;--info:#3b82f6;}
@@ -95,6 +101,11 @@ header{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 
 /* TOAST */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--panel);border:1px solid var(--success);border-radius:12px;padding:12px 20px;font-size:13px;font-weight:700;z-index:1000;transition:transform .3s;white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+/* ORDER NOTIFICATION */
+.order-notif{position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#000;padding:12px 16px;display:none;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;animation:slideDown .3s ease;}
+.order-notif.show{display:flex;}
+@keyframes slideDown{from{transform:translateY(-100%);}to{transform:translateY(0);}}
+.notif-btn{background:#000;color:#fbbf24;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;}
 /* SPINNER */
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -151,7 +162,11 @@ header{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 
     </div>
     <!-- ORDER -->
     <div class="order-side">
-      <div class="order-header">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--line);">
+  <div style="font-size:12px;font-weight:700;color:#6b6b8a;margin-bottom:6px;">📦 طلباتي النشطة</div>
+  <div id="activeOrdersPanel"><div style="text-align:center;padding:8px;color:#6b6b8a;font-size:12px;">لا توجد طلبات</div></div>
+</div>
+<div class="order-header">
         <h3>🧾 الطلب الحالي</h3>
         <button class="clear-btn" onclick="clearOrder()">مسح الكل</button>
       </div>
@@ -170,6 +185,10 @@ header{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 
   </div>
 </div>
 
+<div class="order-notif" id="orderNotif">
+  <span id="notifText">🔔 طلب جديد!</span>
+  <button class="notif-btn" onclick="document.getElementById('orderNotif').classList.remove('show')">✓ تم</button>
+</div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -274,6 +293,7 @@ function enterApp() {
     setOrderType('delivery');
   }
   loadMenu();
+  startRealtimeOrders();
   updateTypeBadge();
 }
 
@@ -430,6 +450,79 @@ window.submitOrder = async function() {
 };
 
 function fmt(n) { return Number(n||0).toLocaleString('en-US'); }
+
+// ── AUDIO ──
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} }
+  if (audioCtx?.state==='suspended') audioCtx.resume();
+}
+function playOrderSound() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  [[880,0,.15],[1100,.18,.15],[1320,.36,.2],[880,.58,.15],[1320,.76,.3]].forEach(([freq,start,dur]) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.frequency.value=freq; osc.type='sine';
+    gain.gain.setValueAtTime(.0001,now+start);
+    gain.gain.exponentialRampToValueAtTime(.2,now+start+.02);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+start+dur);
+    osc.start(now+start); osc.stop(now+start+dur+.01);
+  });
+  if (navigator.vibrate) navigator.vibrate([150,80,150]);
+}
+document.addEventListener('touchstart', initAudio, {passive:true});
+document.addEventListener('click', initAudio);
+
+// ── REALTIME ORDER UPDATES ──
+let lastOrderCount = -1;
+function startRealtimeOrders() {
+  if (!userData) return;
+  window._fb.onSnapshot(
+    window._fb.query(
+      window._fb.collection(window._fb.db, 'orders'),
+      window._fb.where('cashierId','==', userData.id)
+    ),
+    snap => {
+      const orders = snap.docs.map(d=>({id:d.id,...d.data()}));
+      const activeOrders = orders.filter(o=>['pending','accepted'].includes(o.status));
+      if (lastOrderCount >= 0 && activeOrders.length > lastOrderCount) {
+        // New order came back (e.g. accepted by kitchen)
+        playOrderSound();
+        const notif = document.getElementById('orderNotif');
+        document.getElementById('notifText').textContent = '✅ تم قبول طلبك في المطبخ!';
+        notif.classList.add('show');
+        setTimeout(()=>notif.classList.remove('show'), 5000);
+      }
+      lastOrderCount = activeOrders.length;
+      renderActiveOrders(orders);
+    }
+  );
+}
+
+function renderActiveOrders(orders) {
+  const active = orders.filter(o=>['pending','accepted','preparing'].includes(o.status))
+    .sort((a,b)=>(b.createdAtMs||0)-(a.createdAtMs||0));
+  const container = document.getElementById('activeOrdersPanel');
+  if (!container) return;
+  if (!active.length) {
+    container.innerHTML = '<div style="text-align:center;padding:12px;color:#6b6b8a;font-size:12px;">لا توجد طلبات نشطة</div>';
+    return;
+  }
+  container.innerHTML = active.map(o => {
+    const statusMap = {pending:'⏳ انتظار',accepted:'✅ مقبول',preparing:'🍳 يتحضر'};
+    const colorMap = {pending:'#f59e0b',accepted:'#10b981',preparing:'#3b82f6'};
+    return `<div style="background:#1a1a24;border:1px solid #25253a;border-radius:10px;padding:10px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-weight:700;font-size:13px;">#${o.id.slice(0,6).toUpperCase()}</span>
+        <span style="font-size:11px;font-weight:700;color:${colorMap[o.status]||'#6b6b8a'}">${statusMap[o.status]||o.status}</span>
+      </div>
+      <div style="font-size:11px;color:#6b6b8a;">${(o.items||[]).map(i=>`${i.name}×${i.qty}`).join(' • ')}</div>
+      <div style="font-size:12px;font-weight:700;color:#f59e0b;margin-top:4px;">${fmt(o.total)} د.ع</div>
+    </div>`;
+  }).join('');
+}
 
 let toastT;
 function showToast(msg) {
