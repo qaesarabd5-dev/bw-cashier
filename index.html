@@ -109,6 +109,19 @@ header{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 
 /* SPINNER */
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
+/* PRINT STYLES */
+@media print {
+  body > *:not(#printArea){display:none!important;}
+  #printArea{display:block!important;}
+}
+#printArea{display:none;}
+.print-ticket{width:76mm;font-family:'Courier New',monospace;font-size:12px;color:#000;background:#fff;padding:3mm;page-break-after:always;}
+.print-ticket:last-child{page-break-after:avoid;}
+.pt-center{text-align:center;}
+.pt-bold{font-weight:900;}
+.pt-row{display:flex;justify-content:space-between;padding:2px 0;}
+.pt-dash{border-top:1px dashed #000;margin:5px 0;}
+.pt-section-title{background:#000;color:#fff;text-align:center;padding:3px;font-weight:900;font-size:14px;margin:4px 0;}
 </style>
 </head>
 <body>
@@ -189,6 +202,7 @@ header{background:var(--panel);border-bottom:1px solid var(--line);padding:10px 
   <span id="notifText">🔔 طلب جديد!</span>
   <button class="notif-btn" onclick="document.getElementById('orderNotif').classList.remove('show')">✓ تم</button>
 </div>
+<div id="printArea"></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -457,15 +471,61 @@ window.submitOrder = async function() {
       printed: {},
     };
     await window._fb.addDoc(window._fb.collection(window._fb.db, 'orders'), order);
+    const orderForPrint = {...order, items: orderItems};
     orderItems = [];
     renderOrder();
     showToast('✅ تم إرسال الطلب بنجاح');
+    setTimeout(() => printKitchenTickets(orderForPrint), 500);
   } catch(e) { showToast('❌ خطأ: '+e.message); }
   btn.innerHTML = '✅ إرسال الطلب';
   btn.disabled = false;
 };
 
 function fmt(n) { return Number(n||0).toLocaleString('en-US'); }
+
+// ── PRINT ──
+function printKitchenTickets(order) {
+  const typeMap = {delivery:'دلفري 🛵', takeaway:'سفري 🥡', salon:'صالة 🪑'};
+  const time = new Date().toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});
+  const orderNum = '#' + Math.random().toString(36).slice(2,8).toUpperCase();
+
+  // Group items by kitchen section
+  const groups = {};
+  (order.items||[]).forEach(item => {
+    const sec = item.kitchenSection || 'عام';
+    if (!groups[sec]) groups[sec] = [];
+    groups[sec].push(item);
+  });
+
+  if (!Object.keys(groups).length) return;
+
+  // Build tickets HTML
+  const tickets = Object.entries(groups).map(([sec, items]) => `
+    <div class="print-ticket">
+      <div class="pt-center pt-bold" style="font-size:16px;">بركر ويست</div>
+      <div class="pt-section-title">${sec}</div>
+      <div class="pt-dash"></div>
+      <div class="pt-row"><span>رقم:</span><span class="pt-bold">${orderNum}</span></div>
+      <div class="pt-row"><span>النوع:</span><span>${typeMap[order.orderType]||order.orderType}</span></div>
+      <div class="pt-row"><span>الوقت:</span><span>${time}</span></div>
+      ${order.customer?`<div class="pt-row"><span>الزبون:</span><span>${order.customer}</span></div>`:''}
+      ${order.tableNum?`<div class="pt-row"><span>الطاولة:</span><span>${order.tableNum}</span></div>`:''}
+      ${order.notes?`<div class="pt-row"><span>ملاحظة:</span><span>${order.notes}</span></div>`:''}
+      <div class="pt-dash"></div>
+      ${items.map(i=>`<div class="pt-row"><span>${i.name}</span><span class="pt-bold">× ${i.qty}</span></div>`).join('')}
+      <div class="pt-dash"></div>
+      <div class="pt-center" style="font-size:11px;">كاشير: ${userData?.name||'—'}</div>
+    </div>`).join('');
+
+  document.getElementById('printArea').innerHTML = tickets;
+  document.getElementById('printArea').style.display = 'block';
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      document.getElementById('printArea').style.display = 'none';
+    }, 1000);
+  }, 200);
+}
 
 // ── AUDIO ──
 let audioCtx = null;
