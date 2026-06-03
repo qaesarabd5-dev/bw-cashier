@@ -533,5 +533,10 @@ function showToast(msg) {
   toastT = setTimeout(() => t.classList.remove('show'), 3000);
 }
 </script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/bw-cashier/sw.js',{scope:'/bw-cashier/'}).catch(()=>{});
+}
+</script>
 </body>
 </html>
