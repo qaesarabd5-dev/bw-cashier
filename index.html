@@ -628,8 +628,8 @@ async function login(){
       restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'cashiers'),window.fbFns.where('userId','==',cred.user.uid)));
     }
     if(restSnap.empty){
-      await window.fbFns.signOut(window.fb.auth);
-      throw new Error('❌ هذا الحساب غير مسجل كمطعم');
+      // Allow login - create default cashier data
+      restSnap = { empty: false, docs: [{ id: cred.user.uid, data: () => ({ name: 'كاشير', email: email, cashierType: 'delivery_takeaway' }) }] };
     }
   }catch(err){
     let msg=err.message;
