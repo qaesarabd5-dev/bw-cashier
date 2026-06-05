@@ -7,7 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0f1115">
-<title>بركر ويست - الكاشير0268280</title>
+<title>سرعة - تطبيق المطعم v1780268280</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -623,9 +623,9 @@ async function login(){
     const cred=await window.fbFns.signInWithEmailAndPassword(window.fb.auth,email,password);
     // تحقق من restaurants collection مباشرة
     // تحقق من restaurants بالإيميل أو UID
-    let restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'cashiers'),window.fbFns.where('email','==',email)));
+    let restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'restaurants'),window.fbFns.where('email','==',email)));
     if(restSnap.empty){
-      restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'cashiers'),window.fbFns.where('userId','==',cred.user.uid)));
+      restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'restaurants'),window.fbFns.where('userId','==',cred.user.uid)));
     }
     if(restSnap.empty){
       await window.fbFns.signOut(window.fb.auth);
@@ -645,9 +645,9 @@ function setupAuthListener(){
     if(user){
       try{
         // بحث بالإيميل أو userId
-        let restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'cashiers'),window.fbFns.where('email','==',user.email)));
+        let restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'restaurants'),window.fbFns.where('email','==',user.email)));
         if(restSnap.empty){
-          restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'cashiers'),window.fbFns.where('userId','==',user.uid)));
+          restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'restaurants'),window.fbFns.where('userId','==',user.uid)));
         }
         if(restSnap.empty){await window.fbFns.signOut(window.fb.auth);return;}
         currentUserData={id:restSnap.docs[0].id,...restSnap.docs[0].data()};
@@ -655,7 +655,7 @@ function setupAuthListener(){
         // تحديث userId إذا تغير
         try{
           if(currentUserData.userId!==user.uid){
-            await window.fbFns.updateDoc(window.fbFns.doc(window.fb.db,'cashiers',currentUserData.id),{userId:user.uid});
+            await window.fbFns.updateDoc(window.fbFns.doc(window.fb.db,'restaurants',currentUserData.id),{userId:user.uid});
           }
         }catch(e2){}
         await enterApp();
