@@ -7,7 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0f1115">
-<title>بركر ويست - تطبيق المطعم v1780268280</title>
+<title>سرعة - تطبيق المطعم v1780268280</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -260,7 +260,7 @@ if('serviceWorker' in navigator){
     regs.forEach(r=>r.unregister());
   }).then(()=>{
     // Register our own SW
-    navigator.serviceWorker.register('/bw-rest2/sw.js', {scope:'/bw-rest2/'});
+    navigator.serviceWorker.register('/sora3a-rest2/sw.js', {scope:'/sora3a-rest2/'});
   });
   // Clear all caches
   caches.keys().then(keys=>keys.forEach(k=>caches.delete(k)));
@@ -272,12 +272,12 @@ if('serviceWorker' in navigator){
 <div class="login-screen" id="loginScreen" style="display:none;">
   <div class="login-card">
     <div class="login-logo">🍽️</div>
-    <div class="login-title">منصة بركر ويست</div>
+    <div class="login-title">بركر ويست</div>
     <div class="login-subtitle">تطبيق المطعم</div>
     <div class="cloud-status"><span class="sync-dot"></span><span>متصل بـ Firebase</span></div>
     <div class="role-badge-top">🍽️ دخول المطاعم فقط</div>
     <div class="form-error" id="loginError" style="display:none;"></div>
-    <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="loginEmail" placeholder="restaurant@bw.com"></div>
+    <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="loginEmail" placeholder="restaurant@sora3a.com"></div>
     <div class="form-group"><label>كلمة المرور</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
     <button class="btn btn-primary" id="loginBtn">🔐 دخول</button>
     <p style="color:var(--muted);font-size:11px;text-align:center;margin-top:16px;line-height:1.6;">💡 الإدارة تعطيك بيانات الدخول.</p>
@@ -474,15 +474,15 @@ import { initializeAuth, browserLocalPersistence, indexedDBLocalPersistence, sig
 import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey:"AIzaSyDMqqb4XN25rAM5DBvSuDPjDN1dgcya-zA",
-  authDomain:"bw-delivery.firebaseapp.com",
-  projectId:"bw-delivery",
-  storageBucket:"bw-delivery.firebasestorage.app",
-  messagingSenderId:"774569904586",
-  appId:"1:774569904586:web:e0d2e20d8964e4d6656733"
+  apiKey:"AIzaSyAIkpN0_cSJzSOq-oWDjBbTPJUxe7MHDTk",
+  authDomain:"restaurant-pos-891d8.firebaseapp.com",
+  projectId:"restaurant-pos-891d8",
+  storageBucket:"restaurant-pos-891d8.firebasestorage.app",
+  messagingSenderId:"582886444374",
+  appId:"1:582886444374:web:70251a1d78e6258a759af7"
 };
 
-const app = initializeApp(firebaseConfig, "bw-restaurant");
+const app = initializeApp(firebaseConfig, "sora3a-restaurant");
 const auth = initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] });
 const db = getFirestore(app);
 
@@ -623,9 +623,9 @@ async function login(){
     const cred=await window.fbFns.signInWithEmailAndPassword(window.fb.auth,email,password);
     // تحقق من restaurants collection مباشرة
     // تحقق من restaurants بالإيميل أو UID
-    let restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'cashiers'),window.fbFns.where('email','==',email)));
+    let restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'restaurants'),window.fbFns.where('email','==',email)));
     if(restSnap.empty){
-      restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'cashiers'),window.fbFns.where('userId','==',cred.user.uid)));
+      restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'restaurants'),window.fbFns.where('userId','==',cred.user.uid)));
     }
     if(restSnap.empty){
       await window.fbFns.signOut(window.fb.auth);
@@ -645,17 +645,17 @@ function setupAuthListener(){
     if(user){
       try{
         // بحث بالإيميل أو userId
-        let restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'cashiers'),window.fbFns.where('email','==',user.email)));
+        let restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'restaurants'),window.fbFns.where('email','==',user.email)));
         if(restSnap.empty){
-          restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'cashiers'),window.fbFns.where('userId','==',user.uid)));
+          restSnap=await window.fbFns.getDocs(window.fbFns.query(window.fbFns.collection(window.fb.db,'restaurants'),window.fbFns.where('userId','==',user.uid)));
         }
         if(restSnap.empty){await window.fbFns.signOut(window.fb.auth);return;}
         currentUserData={id:restSnap.docs[0].id,...restSnap.docs[0].data()};
-        currentUser={uid:user.uid,email:user.email,name:currentUserData.name||'المطعم',role:'cashier'};
+        currentUser={uid:user.uid,email:user.email,name:currentUserData.name||'المطعم',role:'restaurant'};
         // تحديث userId إذا تغير
         try{
           if(currentUserData.userId!==user.uid){
-            await window.fbFns.updateDoc(window.fbFns.doc(window.fb.db,'cashiers',currentUserData.id),{userId:user.uid});
+            await window.fbFns.updateDoc(window.fbFns.doc(window.fb.db,'restaurants',currentUserData.id),{userId:user.uid});
           }
         }catch(e2){}
         await enterApp();
